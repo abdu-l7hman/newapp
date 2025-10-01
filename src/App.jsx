@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { listProjectsWithDetails, toggleLike } from './services/db.js';
+import Login from './Login.jsx';
 import { Search, Filter, TrendingUp, Clock, Sparkles, Heart, MessageCircle, Share2, Bookmark, Star, CheckCircle, AlertCircle, DollarSign } from 'lucide-react';
 
 // Button Component
@@ -53,13 +55,16 @@ const Badge = ({ children, variant = 'default', className = '' }) => {
 };
 
 // ProjectCard Component
-const ProjectCard = ({ project, userRole, onLike, onComment, onShare, onBookmark, onReview, onInvest }) => {
+const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onShare, onBookmark, onReview, onInvest }) => {
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
 
-  const handleLike = () => {
+  const handleLike = async () => {
     setLiked(!liked);
     onLike();
+    if (currentUserId) {
+      await toggleLike({ projectId: project.id, userId: currentUserId });
+    }
   };
 
   const handleBookmark = () => {
@@ -203,74 +208,43 @@ const ProjectCard = ({ project, userRole, onLike, onComment, onShare, onBookmark
 const Feed = ({ userRole }) => {
   const [filter, setFilter] = useState('all');
 
-  const projects = [
-    {
-      id: '1',
-      title: 'AI-Powered Medical Diagnosis Assistant',
-      description: 'A machine learning system that assists doctors in diagnosing rare diseases by analyzing medical images and patient data with 94% accuracy.',
-      author: {
-        name: 'Jana Al Qassin',
-        university: 'KAUST',
-        avatar: 'JQ'
-      },
-      category: 'Healthcare',
-      tags: ['AI', 'Machine Learning', 'Healthcare', 'Computer Vision'],
-      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop',
-      fundingGoal: 150000,
-      currentFunding: 87500,
-      likes: 234,
-      comments: 45,
-      shares: 12,
-      timeAgo: '2 hours ago',
-      status: 'reviewed',
-      analystScore: 8.7,
-      investorInterest: 92
-    },
-    {
-      id: '2',
-      title: 'Smart Grid Energy Management System',
-      description: 'IoT-based solution for optimizing renewable energy distribution in smart cities, reducing energy waste by up to 35%.',
-      author: {
-        name: 'Omar Al-Hassan',
-        university: 'KFUPM',
-        avatar: 'OH'
-      },
-      category: 'Clean Tech',
-      tags: ['IoT', 'Renewable Energy', 'Smart Cities', 'Sustainability'],
-      image: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&auto=format&fit=crop',
-      fundingGoal: 200000,
-      currentFunding: 125000,
-      likes: 189,
-      comments: 32,
-      shares: 8,
-      timeAgo: '4 hours ago',
-      status: 'funded',
-      analystScore: 9.2,
-      investorInterest: 88
-    },
-    {
-      id: '3',
-      title: 'Micro-Investment Platform for Students',
-      description: 'A mobile app that allows students to invest spare change from daily purchases into diversified portfolios with educational resources.',
-      author: {
-        name: 'Fatima Al-Zahra',
-        university: 'AUC',
-        avatar: 'FZ'
-      },
-      category: 'FinTech',
-      tags: ['Mobile App', 'Finance', 'Education', 'Investments'],
-      image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop',
-      fundingGoal: 100000,
-      currentFunding: 45000,
-      likes: 156,
-      comments: 28,
-      shares: 15,
-      timeAgo: '6 hours ago',
-      status: 'pending',
-      analystScore: 7.4,
-      investorInterest: 76
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const { data } = await listProjectsWithDetails();
+      if (!cancelled && data) setProjects(
+        data.map((p) => ({
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          author: {
+            name: 'Student',
+            university: '—',
+            avatar: 'ST'
+          },
+          category: p.category,
+          tags: p.tags || [],
+          image: p.image_url,
+          fundingGoal: p.funding_goal ?? 0,
+          currentFunding: p.current_funding ?? 0,
+          likes: p.likes ?? 0,
+          comments: 0,
+          shares: 0,
+          timeAgo: '',
+          status: p.status ?? 'pending',
+          analystScore: 0,
+          investorInterest: 0
+        }))
+      );
+      setLoading(false);
     }
-  ];
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   const filterButtons = [
     { id: 'all', label: 'All Projects', icon: null },
@@ -360,11 +334,12 @@ const Feed = ({ userRole }) => {
 
       {/* Project Feed */}
       <div className="space-y-4">
-        {projects.map((project) => (
+        {!loading && projects.map((project) => (
           <ProjectCard
             key={project.id}
             project={project}
             userRole={userRole}
+            currentUserId={userRole === 'investor' ? 'u-investor-1' : 'u-student-1'}
             onLike={() => console.log('Liked project:', project.id)}
             onComment={() => console.log('Comment on project:', project.id)}
             onShare={() => console.log('Share project:', project.id)}
@@ -373,6 +348,9 @@ const Feed = ({ userRole }) => {
             onInvest={() => console.log('Invest in project:', project.id)}
           />
         ))}
+        {loading && (
+          <div className="text-center text-gray-500 text-sm">Loading projects…</div>
+        )}
       </div>
 
       {/* Load More */}
@@ -388,9 +366,14 @@ const Feed = ({ userRole }) => {
 // Main App Component with Role Selector
 export default function App() {
   const [userRole, setUserRole] = useState('student');
+  const [user, setUser] = useState(null);
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {!user && (
+        <Login onSuccess={(u) => { setUser(u); setUserRole(u?.role || 'student'); }} />
+      )}
+      {user && (
       {/* Header with Role Switcher */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto p-4">
@@ -418,6 +401,7 @@ export default function App() {
               >
                 Investor
               </Button>
+              <Button size="sm" variant="outline" onClick={() => { setUser(null); }}>Logout</Button>
             </div>
           </div>
         </div>
@@ -425,6 +409,7 @@ export default function App() {
 
       {/* Feed */}
       <Feed userRole={userRole} />
+      )}
     </div>
   );
 }
