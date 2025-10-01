@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { listProjectsWithDetails, toggleLike } from './services/db.js';
+import { listProjectsWithDetails, toggleLike, createProject } from './services/db.js';
 import Login from './Login.jsx';
-import { Search, Filter, TrendingUp, Clock, Sparkles, Heart, MessageCircle, Share2, Bookmark, Star, CheckCircle, AlertCircle, DollarSign } from 'lucide-react';
+import { Search, Filter, TrendingUp, Clock, Sparkles, Heart, MessageCircle, Share2, Bookmark, Star, CheckCircle, AlertCircle, DollarSign, Home, PlusCircle, User } from 'lucide-react';
 
 // Button Component
 const Button = ({ children, variant = 'default', size = 'default', className = '', ...props }) => {
@@ -367,6 +367,7 @@ const Feed = ({ userRole }) => {
 export default function App() {
   const [userRole, setUserRole] = useState('student');
   const [user, setUser] = useState(null);
+  const [tab, setTab] = useState('feed'); // feed | explore | submit | profile
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -374,42 +375,285 @@ export default function App() {
         <Login onSuccess={(u) => { setUser(u); setUserRole(u?.role || 'student'); }} />
       )}
       {user && (
-      {/* Header with Role Switcher */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto p-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-blue-600">Student Projects Hub</h1>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant={userRole === 'student' ? 'default' : 'outline'}
-                onClick={() => setUserRole('student')}
-              >
-                Student
-              </Button>
-              <Button
-                size="sm"
-                variant={userRole === 'analyst' ? 'default' : 'outline'}
-                onClick={() => setUserRole('analyst')}
-              >
-                Analyst
-              </Button>
-              <Button
-                size="sm"
-                variant={userRole === 'investor' ? 'default' : 'outline'}
-                onClick={() => setUserRole('investor')}
-              >
-                Investor
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => { setUser(null); }}>Logout</Button>
+        <>
+          {/* Header with Role Switcher */}
+          <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+            <div className="max-w-2xl mx-auto p-4">
+              <div className="flex items-center justify-between">
+                <h1 className="text-xl font-bold text-blue-600">Investo</h1>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={userRole === 'student' ? 'default' : 'outline'}
+                    onClick={() => setUserRole('student')}
+                  >
+                    Student
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={userRole === 'analyst' ? 'default' : 'outline'}
+                    onClick={() => setUserRole('analyst')}
+                  >
+                    Analyst
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={userRole === 'investor' ? 'default' : 'outline'}
+                    onClick={() => setUserRole('investor')}
+                  >
+                    Investor
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => { setUser(null); }}>Logout</Button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Main content area */}
+          <div className="pb-24">
+            {tab === 'feed' && <Feed userRole={userRole} />}
+            {tab === 'explore' && <Explore />}
+            {tab === 'submit' && <SubmitForm currentUserId={user?.id} onCreated={() => setTab('feed')} />}
+            {tab === 'profile' && <Profile user={user} />}
+          </div>
+
+          <BottomNav tab={tab} setTab={setTab} />
+        </>
+      )}
+    </div>
+  );
+}
+
+// Bottom navigation component
+function BottomNav({ tab, setTab }) {
+  const itemClass = (t) => `flex-1 flex flex-col items-center justify-center py-2 ${tab===t ? 'text-blue-600' : 'text-gray-600'}`;
+  return (
+  <nav className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-inner z-20">
+      <div className="max-w-2xl mx-auto flex">
+        <button className={itemClass('feed')} onClick={() => setTab('feed')} aria-label="Feed">
+          <Home className="w-6 h-6" />
+          <span className="text-xs mt-1">Feed</span>
+        </button>
+        <button className={itemClass('explore')} onClick={() => setTab('explore')} aria-label="Explore">
+          <Search className="w-6 h-6" />
+          <span className="text-xs mt-1">Explore</span>
+        </button>
+        <button className={itemClass('submit')} onClick={() => setTab('submit')} aria-label="Submit">
+          <PlusCircle className="w-6 h-6" />
+          <span className="text-xs mt-1">Submit</span>
+        </button>
+        <button className={itemClass('profile')} onClick={() => setTab('profile')} aria-label="Profile">
+          <User className="w-6 h-6" />
+          <span className="text-xs mt-1">Profile</span>
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+function Explore() {
+  return (
+    <div className="max-w-2xl mx-auto p-4">
+      <h2 className="text-lg font-semibold mb-2">Explore</h2>
+      <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+        <p className="text-sm text-gray-600">Search and discovery features are still under development. Check back soon!</p>
+        <div className="mt-4">
+          <input className="w-full rounded-md border border-gray-200 px-3 py-2" placeholder="Search (coming soon)…" disabled />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SubmitForm({ currentUserId, onCreated }) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [fundingGoal, setFundingGoal] = useState('');
+  const [timelineMonths, setTimelineMonths] = useState('12');
+  const [teamSize, setTeamSize] = useState('1');
+  const [elevatorPitch, setElevatorPitch] = useState('');
+  const [demoUrl, setDemoUrl] = useState('');
+  const [category, setCategory] = useState('Select a category');
+  const [tagInput, setTagInput] = useState('');
+  const [tags, setTags] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  function addTag() {
+    const t = tagInput.trim();
+    if (t && !tags.includes(t)) {
+      setTags([...tags, t]);
+      setTagInput('');
+    }
+  }
+
+  function removeTag(t) {
+    setTags(tags.filter(x => x !== t));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+    const goal = Number(fundingGoal) || 0;
+    const payload = {
+      authorId: currentUserId || 'u-local',
+      title,
+      description,
+      imageUrl: '',
+      fundingGoal: goal,
+      category,
+      fieldNames: tags,
+      extra: {
+        timelineMonths: Number(timelineMonths) || 0,
+        teamSize: Number(teamSize) || 0,
+        elevatorPitch,
+        demoUrl
+      }
+    };
+    const { error } = await createProject(payload);
+    setLoading(false);
+    if (error) setMessage('Failed to submit project.'); else {
+      setMessage('Project submitted (demo).');
+      setTitle(''); setDescription(''); setFundingGoal(''); setCategory('Select a category'); setTags([]); setTagInput(''); setTimelineMonths('12'); setTeamSize('1'); setElevatorPitch(''); setDemoUrl('');
+      onCreated && onCreated();
+    }
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto p-4">
+      <h2 className="text-lg font-semibold mb-4">Submit Your Project</h2>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h3 className="font-semibold mb-3">Project Overview</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Project Title *</label>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Enter your project title" required className="w-full rounded-md border border-gray-200 px-3 py-2 bg-gray-50" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Description *</label>
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe your project, its purpose, and key features..." required rows={4} className="w-full rounded-md border border-gray-200 px-3 py-2 bg-gray-50" />
+            </div>
+
+            <div className="flex gap-3 items-center">
+              <div className="flex-1">
+                <label className="block text-sm font-medium mb-1">Category *</label>
+                <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-md border border-gray-200 px-3 py-2 bg-white">
+                  <option>Select a category</option>
+                  <option>AI</option>
+                  <option>FinTech</option>
+                  <option>Healthcare</option>
+                  <option>Education</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div className="w-1/2">
+                <label className="block text-sm font-medium mb-1">Tags</label>
+                <div className="flex gap-2">
+                  <input value={tagInput} onChange={(e) => setTagInput(e.target.value)} placeholder="Add a tag" className="flex-1 rounded-md border border-gray-200 px-3 py-2 bg-white" />
+                  <button type="button" onClick={addTag} className="rounded-md bg-white border border-gray-200 px-3">+</button>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {tags.map(t => (
+                    <span key={t} className="inline-flex items-center gap-2 bg-gray-100 text-sm px-2 py-1 rounded-full">
+                      {t} <button type="button" onClick={() => removeTag(t)} className="text-gray-500">×</button>
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </header>
 
-      {/* Feed */}
-      <Feed userRole={userRole} />
-      )}
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h3 className="font-semibold mb-3">Project Details</h3>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Funding Goal</label>
+              <input value={fundingGoal} onChange={(e) => setFundingGoal(e.target.value)} className="w-full rounded-md border border-gray-200 px-3 py-2 bg-gray-50" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Timeline (months)</label>
+              <input value={timelineMonths} onChange={(e) => setTimelineMonths(e.target.value)} className="w-full rounded-md border border-gray-200 px-3 py-2 bg-gray-50" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Team Size</label>
+              <input value={teamSize} onChange={(e) => setTeamSize(e.target.value)} className="w-full rounded-md border border-gray-200 px-3 py-2 bg-gray-50" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Elevator Pitch</label>
+            <textarea value={elevatorPitch} onChange={(e) => setElevatorPitch(e.target.value)} placeholder="Summarize your project in 2-3 sentences..." rows={3} className="w-full rounded-md border border-gray-200 px-3 py-2 bg-gray-50" />
+          </div>
+
+          <div className="mt-3">
+            <label className="block text-sm font-medium mb-1">Demo URL (optional)</label>
+            <input value={demoUrl} onChange={(e) => setDemoUrl(e.target.value)} placeholder="https://..." className="w-full rounded-md border border-gray-200 px-3 py-2 bg-gray-50" />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <button type="submit" disabled={loading} className="rounded-md bg-blue-600 text-white px-4 py-2">{loading ? 'Submitting…' : 'Submit project'}</button>
+          {message && <span className="text-sm text-gray-600">{message}</span>}
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function Profile({ user }) {
+  if (!user) return (
+    <div className="max-w-2xl mx-auto p-4"> <p className="text-sm text-gray-600">No profile available.</p> </div>
+  );
+  const demo = {
+    age: 22,
+    major: 'Computer Science',
+    university: 'Demo University',
+    previousProjects: [
+      { id: 'd1', title: 'AI-Powered Diagnosis', short: 'ML system analyzing images and patient data' },
+      { id: 'd2', title: 'Micro-Invest Platform', short: 'Micro-investing for students' }
+    ]
+  };
+  const profile = { ...demo, ...user };
+  return (
+    <div className="max-w-2xl mx-auto p-4">
+      <h2 className="text-lg font-semibold mb-2">Profile</h2>
+      <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+        <div>
+          <p className="font-medium text-lg">{user.displayName || user.email || 'Unnamed'}</p>
+          <p className="text-sm text-gray-500">{profile.university}</p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <p className="text-xs text-gray-500">Age</p>
+            <p className="font-medium">{profile.age}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Major</p>
+            <p className="font-medium">{profile.major}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Role</p>
+            <p className="font-medium">{user.role || 'student'}</p>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium">Previous Projects</h3>
+          <div className="mt-2 space-y-2">
+            {profile.previousProjects.map(p => (
+              <div key={p.id} className="p-3 bg-gray-50 rounded-md border border-gray-100">
+                <p className="font-medium">{p.title}</p>
+                <p className="text-sm text-gray-600">{p.short}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
