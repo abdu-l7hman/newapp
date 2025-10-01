@@ -1,0 +1,434 @@
+import React, { useState } from 'react';
+import { Search, Filter, TrendingUp, Clock, Sparkles, Heart, MessageCircle, Share2, Bookmark, Star, CheckCircle, AlertCircle, DollarSign } from 'lucide-react';
+
+// The components are styled using Tailwind CSS, which must be configured in your project.
+
+// Button Component
+const Button = ({ children, variant = 'default', size = 'default', className = '', ...props }) => {
+  const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
+  const variants = {
+    default: 'bg-blue-600 text-white hover:bg-blue-700',
+    outline: 'border border-gray-300 bg-white hover:bg-gray-50',
+    ghost: 'hover:bg-gray-100',
+    secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+  };
+  const sizes = {
+    default: 'h-10 px-4 py-2',
+    sm: 'h-8 px-3 text-sm',
+    icon: 'h-10 w-10'
+  };
+  
+  return (
+    <button
+      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+
+// Input Component
+const Input = ({ className = '', ...props }) => {
+  return (
+    <input
+      className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      {...props}
+    />
+  );
+};
+
+// Badge Component
+const Badge = ({ children, variant = 'default', className = '' }) => {
+  const variants = {
+    default: 'bg-blue-100 text-blue-800',
+    secondary: 'bg-gray-100 text-gray-800',
+    success: 'bg-green-100 text-green-800',
+    warning: 'bg-yellow-100 text-yellow-800'
+  };
+  
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${variants[variant]} ${className}`}>
+      {children}
+    </span>
+  );
+};
+
+// ProjectCard Component
+const ProjectCard = ({ project, userRole, onLike, onComment, onShare, onBookmark, onReview, onInvest }) => {
+  const [liked, setLiked] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
+
+  const handleLike = () => {
+    setLiked(!liked);
+    onLike();
+  };
+
+  const handleBookmark = () => {
+    setBookmarked(!bookmarked);
+    onBookmark();
+  };
+
+  const fundingPercentage = (project.currentFunding / project.fundingGoal) * 100;
+
+  const getStatusBadge = () => {
+    switch (project.status) {
+      case 'funded':
+        return <Badge variant="success" className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Funded</Badge>;
+      case 'reviewed':
+        return <Badge variant="default" className="flex items-center gap-1"><Star className="w-3 h-3" /> Reviewed</Badge>;
+      case 'pending':
+        return <Badge variant="warning" className="flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Pending</Badge>;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+      {/* Project Image */}
+      <div className="relative h-48 bg-gray-200">
+        <img
+          src={project.image}
+          alt={project.title}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute top-3 right-3">
+          {getStatusBadge()}
+        </div>
+      </div>
+
+      {/* Project Content */}
+      <div className="p-4">
+        {/* Author Info */}
+        <div className="flex items-center space-x-3 mb-3">
+          <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">
+            {project.author.avatar}
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-sm">{project.author.name}</p>
+            <p className="text-xs text-gray-500">{project.author.university} • {project.timeAgo}</p>
+          </div>
+        </div>
+
+        {/* Title & Description */}
+        <h3 className="font-bold text-lg mb-2">{project.title}</h3>
+        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{project.description}</p>
+
+        {/* Category & Tags */}
+        <div className="mb-3">
+          <Badge className="mb-2">{project.category}</Badge>
+          <div className="flex flex-wrap gap-1">
+            {project.tags.slice(0, 3).map((tag, idx) => (
+              <Badge key={idx} variant="secondary" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        {/* Funding Progress */}
+        <div className="mb-4">
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-gray-600">Funding Progress</span>
+            <span className="font-semibold">${project.currentFunding.toLocaleString()} / ${project.fundingGoal.toLocaleString()}</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 h-2 rounded-full transition-all"
+              style={{ width: `${Math.min(fundingPercentage, 100)}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-1">{fundingPercentage.toFixed(0)}% funded</p>
+        </div>
+
+        {/* Analyst Metrics (for analysts and investors) */}
+        {(userRole === 'analyst' || userRole === 'investor') && (
+          <div className="flex gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
+            <div className="flex-1">
+              <p className="text-xs text-gray-500">Analyst Score</p>
+              <p className="font-bold text-lg text-blue-600">{project.analystScore}/10</p>
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-gray-500">Investor Interest</p>
+              <p className="font-bold text-lg text-green-600">{project.investorInterest}%</p>
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+          <div className="flex items-center space-x-4">
+            <button onClick={handleLike} className="flex items-center space-x-1 text-gray-600 hover:text-red-600 transition-colors">
+              <Heart className={`w-5 h-5 ${liked ? 'fill-red-600 text-red-600' : ''}`} />
+              <span className="text-sm">{project.likes + (liked ? 1 : 0)}</span>
+            </button>
+            <button onClick={onComment} className="flex items-center space-x-1 text-gray-600 hover:text-blue-600 transition-colors">
+              <MessageCircle className="w-5 h-5" />
+              <span className="text-sm">{project.comments}</span>
+            </button>
+            <button onClick={onShare} className="flex items-center space-x-1 text-gray-600 hover:text-green-600 transition-colors">
+              <Share2 className="w-5 h-5" />
+              <span className="text-sm">{project.shares}</span>
+            </button>
+          </div>
+          <button onClick={handleBookmark} className="text-gray-600 hover:text-yellow-600 transition-colors">
+            <Bookmark className={`w-5 h-5 ${bookmarked ? 'fill-yellow-600 text-yellow-600' : ''}`} />
+          </button>
+        </div>
+
+        {/* Role-specific CTAs */}
+        <div className="mt-4">
+          {userRole === 'analyst' && project.status === 'pending' && (
+            <Button onClick={onReview} className="w-full">
+              Review Project
+            </Button>
+          )}
+          {userRole === 'investor' && project.status !== 'pending' && (
+            <Button onClick={onInvest} className="w-full flex items-center justify-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              Invest Now
+            </Button>
+          )}
+          {userRole === 'student' && (
+            <Button variant="outline" className="w-full">
+              View Details
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Feed Component
+const Feed = ({ userRole }) => {
+  const [filter, setFilter] = useState('all');
+
+  const projects = [
+    {
+      id: '1',
+      title: 'AI-Powered Medical Diagnosis Assistant',
+      description: 'A machine learning system that assists doctors in diagnosing rare diseases by analyzing medical images and patient data with 94% accuracy.',
+      author: {
+        name: 'Jana Al Qassin',
+        university: 'KAUST',
+        avatar: 'JQ'
+      },
+      category: 'Healthcare',
+      tags: ['AI', 'Machine Learning', 'Healthcare', 'Computer Vision'],
+      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop',
+      fundingGoal: 150000,
+      currentFunding: 87500,
+      likes: 234,
+      comments: 45,
+      shares: 12,
+      timeAgo: '2 hours ago',
+      status: 'reviewed',
+      analystScore: 8.7,
+      investorInterest: 92
+    },
+    {
+      id: '2',
+      title: 'Smart Grid Energy Management System',
+      description: 'IoT-based solution for optimizing renewable energy distribution in smart cities, reducing energy waste by up to 35%.',
+      author: {
+        name: 'Omar Al-Hassan',
+        university: 'KFUPM',
+        avatar: 'OH'
+      },
+      category: 'Clean Tech',
+      tags: ['IoT', 'Renewable Energy', 'Smart Cities', 'Sustainability'],
+      image: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&auto=format&fit=crop',
+      fundingGoal: 200000,
+      currentFunding: 125000,
+      likes: 189,
+      comments: 32,
+      shares: 8,
+      timeAgo: '4 hours ago',
+      status: 'funded',
+      analystScore: 9.2,
+      investorInterest: 88
+    },
+    {
+      id: '3',
+      title: 'Micro-Investment Platform for Students',
+      description: 'A mobile app that allows students to invest spare change from daily purchases into diversified portfolios with educational resources.',
+      author: {
+        name: 'Fatima Al-Zahra',
+        university: 'AUC',
+        avatar: 'FZ'
+      },
+      category: 'FinTech',
+      tags: ['Mobile App', 'Finance', 'Education', 'Investments'],
+      image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop',
+      fundingGoal: 100000,
+      currentFunding: 45000,
+      likes: 156,
+      comments: 28,
+      shares: 15,
+      timeAgo: '6 hours ago',
+      status: 'pending',
+      analystScore: 7.4,
+      investorInterest: 76
+    }
+  ];
+
+  const filterButtons = [
+    { id: 'all', label: 'All Projects', icon: null },
+    { id: 'trending', label: 'Trending', icon: TrendingUp },
+    { id: 'recent', label: 'Recent', icon: Clock },
+    { id: 'ai-recommended', label: 'AI Picks', icon: Sparkles },
+  ];
+
+  const getWelcomeMessage = () => {
+    switch (userRole) {
+      case 'student':
+        return {
+          title: 'Welcome back, Ali! 👋',
+          subtitle: 'Discover innovative projects and share your own ideas with the community.'
+        };
+      case 'analyst':
+        return {
+          title: 'Welcome back, Dr. Kamil! 🧐',
+          subtitle: 'Review new student projects and provide valuable insights.'
+        };
+      case 'investor':
+        return {
+          title: 'Welcome back, Abdulmalik! 💰',
+          subtitle: 'Explore vetted investment opportunities from talented students.'
+        };
+      default:
+        return { title: 'Welcome', subtitle: 'Explore the projects feed.' };
+    }
+  };
+
+  const welcome = getWelcomeMessage();
+
+  return (
+    <div className="max-w-2xl mx-auto p-4 pb-20">
+      {/* Welcome Section */}
+      <div className="mb-6">
+        <h2 className="font-bold text-2xl mb-1">{welcome.title}</h2>
+        <p className="text-gray-600">{welcome.subtitle}</p>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="space-y-4 mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search projects, technologies, or students..."
+            className="pl-10 pr-12"
+          />
+          <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 transform -translate-y-1/2">
+            <Filter className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="flex space-x-2 overflow-x-auto pb-2">
+          {filterButtons.map((button) => {
+            const Icon = button.icon;
+            return (
+              <Button
+                key={button.id}
+                variant={filter === button.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilter(button.id)}
+                className="flex items-center space-x-1 shrink-0"
+              >
+                {Icon && <Icon className="w-3 h-3" />}
+                <span>{button.label}</span>
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* AI Recommendations Banner */}
+      {userRole === 'student' && (
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center space-x-2 mb-2">
+            <Sparkles className="h-5 w-5 text-purple-600" />
+            <span className="font-medium text-purple-900">AI Business Analyst</span>
+            <Badge variant="secondary" className="bg-purple-100 text-purple-700">Beta</Badge>
+          </div>
+          <p className="text-sm text-purple-800 mb-3">
+            Get instant feedback on your project ideas from our AI-powered business analyst.
+          </p>
+          <Button size="sm" variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-50">
+            Chat with AI Analyst
+          </Button>
+        </div>
+      )}
+
+      {/* Project Feed */}
+      <div className="space-y-4">
+        {projects.map((project) => (
+          <ProjectCard
+            key={project.id}
+            project={project}
+            userRole={userRole}
+            onLike={() => console.log('Liked project:', project.id)}
+            onComment={() => console.log('Comment on project:', project.id)}
+            onShare={() => console.log('Share project:', project.id)}
+            onBookmark={() => console.log('Bookmark project:', project.id)}
+            onReview={() => console.log('Review project:', project.id)}
+            onInvest={() => console.log('Invest in project:', project.id)}
+          />
+        ))}
+      </div>
+
+      {/* Load More */}
+      <div className="text-center mt-8">
+        <Button variant="outline" className="w-full">
+          Load More Projects
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+// Main App Component with Role Selector
+export default function App() {
+  const [userRole, setUserRole] = useState('student');
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header with Role Switcher */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto p-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-blue-600">Student Projects Hub</h1>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant={userRole === 'student' ? 'default' : 'outline'}
+                onClick={() => setUserRole('student')}
+              >
+                Student
+              </Button>
+              <Button
+                size="sm"
+                variant={userRole === 'analyst' ? 'default' : 'outline'}
+                onClick={() => setUserRole('analyst')}
+              >
+                Analyst
+              </Button>
+              <Button
+                size="sm"
+                variant={userRole === 'investor' ? 'default' : 'outline'}
+                onClick={() => setUserRole('investor')}
+              >
+                Investor
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Feed */}
+      <Feed userRole={userRole} />
+    </div>
+  );
+}
