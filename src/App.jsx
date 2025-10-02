@@ -55,7 +55,7 @@ const Badge = ({ children, variant = 'default', className = '' }) => {
 };
 
 // ProjectCard Component
-const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onShare, onBookmark, onReview, onInvest }) => {
+const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onShare, onBookmark, onReview, onInvest, onViewDetails }) => {
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
 
@@ -91,15 +91,16 @@ const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onSh
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
       {/* Project Image */}
-      <div className="relative h-48 bg-gray-200">
+        <div className="relative h-48 bg-gray-200 group">
         <img
           src={project.image}
           alt={project.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
         />
-        <div className="absolute top-3 right-3">
-          {getStatusBadge()}
-        </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute top-3 right-3">
+            {getStatusBadge()}
+          </div>
       </div>
 
       {/* Project Content */}
@@ -122,13 +123,11 @@ const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onSh
         {/* Category & Tags */}
         <div className="mb-3">
           <Badge className="mb-2">{project.category}</Badge>
-          <div className="flex flex-wrap gap-1">
-            {project.tags.slice(0, 3).map((tag, idx) => (
-              <Badge key={idx} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-          </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {project.tags.slice(0, 5).map((tag, idx) => (
+                <span key={idx} className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">{tag}</span>
+              ))}
+            </div>
           <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
             {project.timelineMonths != null && <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full">⏱ {project.timelineMonths}m</span>}
             {project.teamSize != null && <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full">👥 {project.teamSize}</span>}
@@ -199,7 +198,7 @@ const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onSh
             </Button>
           )}
           {userRole === 'student' && (
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" onClick={() => onViewDetails && onViewDetails(project)}>
               View Details
             </Button>
           )}
@@ -228,7 +227,7 @@ const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onSh
 };
 
 // Feed Component
-const Feed = ({ userRole, refreshKey = 0 }) => {
+const Feed = ({ userRole, refreshKey = 0, onViewDetails }) => {
   const [filter, setFilter] = useState('all');
 
   const [projects, setProjects] = useState([]);
@@ -308,6 +307,27 @@ const Feed = ({ userRole, refreshKey = 0 }) => {
 
   return (
     <div className="max-w-2xl mx-auto p-4 pb-20">
+      {/* Featured carousel */}
+      {projects.filter(p => p.featured).length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-2">Featured</h3>
+          <div className="flex gap-4 overflow-x-auto py-2 scroll-snap-x">
+            {projects.filter(p => p.featured).slice(0,5).map(p => (
+              <div key={p.id} className="min-w-[280px] bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden scroll-snap-align-start">
+                <div className="relative h-36">
+                  <img src={p.image} className="w-full h-full object-cover" alt={p.title} />
+                  <div className="absolute left-3 bottom-3 bg-black bg-opacity-50 text-white px-3 py-1 rounded-md text-sm">{p.category}</div>
+                </div>
+                <div className="p-3">
+                  <p className="font-semibold text-sm line-clamp-2">{p.title}</p>
+                  <p className="text-xs text-gray-500 mt-1">{p.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Welcome Section */}
       <div className="mb-6">
         <h2 className="font-bold text-2xl mb-1">{welcome.title}</h2>
@@ -364,7 +384,7 @@ const Feed = ({ userRole, refreshKey = 0 }) => {
       )}
 
       {/* Project Feed */}
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {!loading && projects.map((project) => (
           <ProjectCard
             key={project.id}
@@ -377,6 +397,7 @@ const Feed = ({ userRole, refreshKey = 0 }) => {
             onBookmark={() => console.log('Bookmark project:', project.id)}
             onReview={() => console.log('Review project:', project.id)}
             onInvest={() => console.log('Invest in project:', project.id)}
+            onViewDetails={onViewDetails}
           />
         ))}
         {loading && (
@@ -401,11 +422,20 @@ export default function App() {
   const [tab, setTab] = useState('feed'); // feed | explore | submit | profile
   // refresh key is bumped when new projects are created so Feed can re-fetch
   const [projectsRefreshKey, setProjectsRefreshKey] = useState(0);
+  const [modalProject, setModalProject] = useState(null);
 
   function handleProjectCreated() {
     // move back to feed and trigger refresh
     setTab('feed');
     setProjectsRefreshKey(k => k + 1);
+  }
+
+  function openProjectModal(project) {
+    setModalProject(project);
+  }
+
+  function closeProjectModal() {
+    setModalProject(null);
   }
 
   return (
@@ -450,7 +480,7 @@ export default function App() {
 
           {/* Main content area */}
           <div className="pb-24">
-            {tab === 'feed' && <Feed userRole={userRole} refreshKey={projectsRefreshKey} />}
+            {tab === 'feed' && <Feed userRole={userRole} refreshKey={projectsRefreshKey} onViewDetails={openProjectModal} />}
             {tab === 'explore' && <Explore />}
             {tab === 'submit' && <SubmitForm currentUserId={user?.id} onCreated={handleProjectCreated} />}
             {tab === 'profile' && <Profile user={user} />}
@@ -458,6 +488,32 @@ export default function App() {
 
           <BottomNav tab={tab} setTab={setTab} />
         </>
+      )}
+
+      {modalProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={closeProjectModal}>
+          <div className="bg-white rounded-lg max-w-2xl w-full p-6 mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start">
+              <h3 className="text-xl font-semibold">{modalProject.title}</h3>
+              <button onClick={closeProjectModal} className="text-gray-500">Close</button>
+            </div>
+            <div className="mt-4">
+              <img src={modalProject.image} className="w-full h-64 object-cover rounded-md" alt="" />
+              <p className="mt-4 text-gray-700">{modalProject.description}</p>
+              {modalProject.elevatorPitch && (
+                <div className="mt-4">
+                  <p className="font-medium">Elevator pitch</p>
+                  <p className="text-gray-600">{modalProject.elevatorPitch}</p>
+                </div>
+              )}
+              {modalProject.demoUrl && (
+                <div className="mt-3">
+                  <a href={modalProject.demoUrl} target="_blank" rel="noreferrer" className="text-blue-600">Open demo</a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
