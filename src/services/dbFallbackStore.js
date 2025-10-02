@@ -150,6 +150,69 @@ export function seedWithDemoData() {
     }
   ];
 
+  // More demo projects
+  const more = [
+    {
+      id: 'p-11',
+      author_id: sara.id,
+      title: 'Peer Tutoring Marketplace',
+      description: 'Connect students for on-demand peer tutoring sessions.',
+      image_url: img('tutoring'),
+      funding_goal: 8000,
+      current_funding: 3200,
+      category: 'Education',
+      status: 'reviewed',
+      featured: true
+    },
+    {
+      id: 'p-12',
+      author_id: omar.id,
+      title: 'Smart Recycling Bins',
+      description: 'IoT-enabled recycling bins that track usage and incentives.',
+      image_url: img('recycling'),
+      funding_goal: 22000,
+      current_funding: 5000,
+      category: 'Sustainability',
+      status: 'pending'
+    },
+    {
+      id: 'p-13',
+      author_id: studentUser.id,
+      title: 'Campus Event Finder',
+      description: 'Discover student-run events and RSVP with friends.',
+      image_url: img('events'),
+      funding_goal: 6000,
+      current_funding: 6000,
+      category: 'Community',
+      status: 'funded',
+      featured: true
+    },
+    {
+      id: 'p-14',
+      author_id: lina.id,
+      title: 'Sleep Cycle Coach',
+      description: 'Wearable-linked app that coaches students to healthier sleep habits.',
+      image_url: img('sleep'),
+      funding_goal: 15000,
+      current_funding: 7300,
+      category: 'HealthTech',
+      status: 'pending'
+    },
+    {
+      id: 'p-15',
+      author_id: sara.id,
+      title: 'Local Volunteer Match',
+      description: 'Match students with local volunteer opportunities and track hours.',
+      image_url: img('volunteer'),
+      funding_goal: 9000,
+      current_funding: 2100,
+      category: 'Community',
+      status: 'pending'
+    }
+  ];
+
+  memory.projects.push(...more);
+
   memory.projects.push(...projects);
 
   // Link some fields (tags) to projects
@@ -163,6 +226,11 @@ export function seedWithDemoData() {
   memory.projectFields.push({ project_id: 'p-8', field_id: 'f-health' });
   memory.projectFields.push({ project_id: 'p-9', field_id: 'f-ai' });
   memory.projectFields.push({ project_id: 'p-10', field_id: 'f-edu' });
+  memory.projectFields.push({ project_id: 'p-11', field_id: 'f-edu' });
+  memory.projectFields.push({ project_id: 'p-12', field_id: 'f-sustain' });
+  memory.projectFields.push({ project_id: 'p-13', field_id: 'f-ai' });
+  memory.projectFields.push({ project_id: 'p-14', field_id: 'f-health' });
+  memory.projectFields.push({ project_id: 'p-15', field_id: 'f-sustain' });
 
   // Some likes to make counts non-zero
   memory.projectLikes.push({ project_id: 'p-1', user_id: investorUser.id });

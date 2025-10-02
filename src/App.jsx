@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { listProjectsWithDetails, toggleLike, createProject } from './services/db.js';
 import Login from './Login.jsx';
-import { Search, Filter, TrendingUp, Clock, Sparkles, Heart, MessageCircle, Share2, Bookmark, Star, CheckCircle, AlertCircle, DollarSign, Home, PlusCircle, User } from 'lucide-react';
+import { Search, Filter, TrendingUp, Clock, Sparkles, Heart, MessageCircle, Share2, Bookmark, Star, CheckCircle, DollarSign, Home, PlusCircle, User } from 'lucide-react';
 
 // Button Component
 const Button = ({ children, variant = 'default', size = 'default', className = '', ...props }) => {
@@ -82,8 +82,7 @@ const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onSh
         return <Badge variant="success" className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Funded</Badge>;
       case 'reviewed':
         return <Badge variant="default" className="flex items-center gap-1"><Star className="w-3 h-3" /> Reviewed</Badge>;
-      case 'pending':
-        return <Badge variant="warning" className="flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Pending</Badge>;
+      // pending intentionally renders no badge (keeps the card cleaner)
       default:
         return null;
     }
@@ -240,8 +239,8 @@ const Feed = ({ userRole, refreshKey = 0 }) => {
     async function load() {
       setLoading(true);
       const { data } = await listProjectsWithDetails();
-      if (!cancelled && data) setProjects(
-        data.map((p) => ({
+      if (!cancelled && data) {
+        const mapped = data.map((p) => ({
           id: p.id,
           title: p.title,
           description: p.description,
@@ -267,8 +266,11 @@ const Feed = ({ userRole, refreshKey = 0 }) => {
           teamSize: p.team_size ?? p.extra?.teamSize ?? null,
           elevatorPitch: p.elevator_pitch ?? p.extra?.elevatorPitch ?? '',
           demoUrl: p.demo_url ?? p.extra?.demoUrl ?? ''
-        }))
-      );
+        }));
+        // put featured projects first
+        mapped.sort((a,b) => (b.featured === true) - (a.featured === true));
+        setProjects(mapped);
+      }
       setLoading(false);
     }
     load();
