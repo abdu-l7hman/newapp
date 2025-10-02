@@ -384,7 +384,7 @@ const Feed = ({ userRole, refreshKey = 0, onViewDetails }) => {
       )}
 
       {/* Project Feed */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div className="grid grid-cols-1 gap-4">
         {!loading && projects.map((project) => (
           <ProjectCard
             key={project.id}
@@ -707,34 +707,51 @@ function Profile({ user }) {
     age: 22,
     major: 'Computer Science',
     university: 'Demo University',
+    bio: 'Passionate student founder building AI tools for education and healthcare. Interested in product design and early-stage startups.',
+    skills: ['React', 'Python', 'ML', 'Product', 'UX'],
+    contact: { email: 'ali@example.com', website: 'https://ali.dev' },
+    stats: { projects: 4, followers: 120, following: 15 },
     previousProjects: [
-      { id: 'd1', title: 'AI-Powered Diagnosis', short: 'ML system analyzing images and patient data' },
-      { id: 'd2', title: 'Micro-Invest Platform', short: 'Micro-investing for students' }
+      { id: 'd1', title: 'AI-Powered Diagnosis', short: 'ML system analyzing images and patient data', year: 2023, role: 'Lead ML' },
+      { id: 'd2', title: 'Micro-Invest Platform', short: 'Micro-investing for students', year: 2022, role: 'Frontend' }
     ]
   };
   const profile = { ...demo, ...user };
   return (
     <div className="max-w-2xl mx-auto p-4">
       <h2 className="text-lg font-semibold mb-2">Profile</h2>
-      <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
-        <div>
-          <p className="font-medium text-lg">{user.displayName || user.email || 'Unnamed'}</p>
-          <p className="text-sm text-gray-500">{profile.university}</p>
+      <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+        <div className="flex items-center gap-4">
+          <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-semibold">{(user.displayName || user.email || 'U').charAt(0)}</div>
+          <div>
+            <p className="font-medium text-lg">{user.displayName || user.email || 'Unnamed'}</p>
+            <p className="text-sm text-gray-500">{profile.university} • {user.role || 'student'}</p>
+            <p className="mt-2 text-sm text-gray-700">{profile.bio}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {profile.skills.map(s => (<span key={s} className="text-xs px-2 py-1 bg-gray-100 rounded-full">{s}</span>))}
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-xs text-gray-500">Age</p>
-            <p className="font-medium">{profile.age}</p>
+            <p className="text-xs text-gray-500">Projects</p>
+            <p className="font-medium">{profile.stats.projects}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500">Major</p>
-            <p className="font-medium">{profile.major}</p>
+            <p className="text-xs text-gray-500">Followers</p>
+            <p className="font-medium">{profile.stats.followers}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500">Role</p>
-            <p className="font-medium">{user.role || 'student'}</p>
+            <p className="text-xs text-gray-500">Following</p>
+            <p className="font-medium">{profile.stats.following}</p>
           </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium">Contact</h3>
+          <p className="text-sm text-gray-700">Email: <a href={`mailto:${profile.contact.email}`} className="text-blue-600">{profile.contact.email}</a></p>
+          <p className="text-sm text-gray-700">Website: <a href={profile.contact.website} target="_blank" rel="noreferrer" className="text-blue-600">{profile.contact.website}</a></p>
         </div>
 
         <div>
@@ -742,8 +759,13 @@ function Profile({ user }) {
           <div className="mt-2 space-y-2">
             {profile.previousProjects.map(p => (
               <div key={p.id} className="p-3 bg-gray-50 rounded-md border border-gray-100">
-                <p className="font-medium">{p.title}</p>
-                <p className="text-sm text-gray-600">{p.short}</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{p.title} <span className="text-xs text-gray-500">• {p.year}</span></p>
+                    <p className="text-sm text-gray-600">{p.short}</p>
+                  </div>
+                  <div className="text-xs text-gray-500">Role: {p.role}</div>
+                </div>
               </div>
             ))}
           </div>
