@@ -101,6 +101,53 @@ export function seedWithDemoData() {
       category: 'Robotics',
       status: 'reviewed'
     }
+    ,
+    {
+      id: 'p-7',
+      author_id: sara.id,
+      title: 'Green Energy Dashboard',
+      description: 'Analytics dashboard for campus energy usage with ML-driven savings suggestions.',
+      image_url: img('green-energy'),
+      funding_goal: 30000,
+      current_funding: 22000,
+      category: 'Sustainability',
+      status: 'reviewed',
+      featured: true
+    },
+    {
+      id: 'p-8',
+      author_id: omar.id,
+      title: 'Clinic Queue Optimizer',
+      description: 'A queue management system for clinics to reduce patient wait times.',
+      image_url: img('clinic-queue'),
+      funding_goal: 45000,
+      current_funding: 18000,
+      category: 'Healthcare',
+      status: 'pending'
+    },
+    {
+      id: 'p-9',
+      author_id: studentUser.id,
+      title: 'AI Essay Grader',
+      description: 'Tool to provide feedback on student essays using NLP models.',
+      image_url: img('essay-grader'),
+      funding_goal: 25000,
+      current_funding: 12500,
+      category: 'Education',
+      status: 'pending',
+      featured: true
+    },
+    {
+      id: 'p-10',
+      author_id: lina.id,
+      title: 'Accessible Notes App',
+      description: 'Notes app focused on accessibility for visually impaired students.',
+      image_url: img('notes-app'),
+      funding_goal: 12000,
+      current_funding: 4000,
+      category: 'Education',
+      status: 'pending'
+    }
   ];
 
   memory.projects.push(...projects);
@@ -112,6 +159,10 @@ export function seedWithDemoData() {
   memory.projectFields.push({ project_id: 'p-4', field_id: 'f-edu' });
   memory.projectFields.push({ project_id: 'p-5', field_id: 'f-health' });
   memory.projectFields.push({ project_id: 'p-6', field_id: 'f-robotics' });
+  memory.projectFields.push({ project_id: 'p-7', field_id: 'f-sustain' });
+  memory.projectFields.push({ project_id: 'p-8', field_id: 'f-health' });
+  memory.projectFields.push({ project_id: 'p-9', field_id: 'f-ai' });
+  memory.projectFields.push({ project_id: 'p-10', field_id: 'f-edu' });
 
   // Some likes to make counts non-zero
   memory.projectLikes.push({ project_id: 'p-1', user_id: investorUser.id });

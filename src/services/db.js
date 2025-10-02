@@ -80,25 +80,60 @@ export async function listProjectsWithDetails() {
   const normalized = projects.map(p => ({
     ...p,
     tags: (p.fields || []).map(r => r.fields.name),
-    likes: p.like_counts?.[0]?.like_count ?? 0
+    likes: p.like_counts?.[0]?.like_count ?? 0,
+    // map extra/pascal-style fields into a predictable shape
+    timeline_months: p.timeline_months ?? p.extra?.timelineMonths ?? null,
+    team_size: p.team_size ?? p.extra?.teamSize ?? null,
+    elevator_pitch: p.elevator_pitch ?? p.extra?.elevatorPitch ?? null,
+    demo_url: p.demo_url ?? p.extra?.demoUrl ?? null
   }));
   return { data: normalized, error: null };
 }
 
-export async function createProject({ authorId, title, description, imageUrl, fundingGoal, category, status = 'pending', fieldNames = [] }) {
+export async function createProject({ authorId, title, description, imageUrl, fundingGoal, category, status = 'pending', fieldNames = [], extra = {} }) {
   const isFallback = useFallback();
   if (isFallback) {
     const memory = getMemory();
     const id = `p-${Math.random().toString(36).slice(2, 8)}`;
-    const project = { id, author_id: authorId, title, description, image_url: imageUrl, funding_goal: fundingGoal, current_funding: 0, category, status };
+    const project = {
+      id,
+      author_id: authorId,
+      title,
+      description,
+      image_url: imageUrl,
+      funding_goal: fundingGoal,
+      current_funding: 0,
+      category,
+      status,
+      // store extras in snake_case to mirror DB column naming
+      timeline_months: extra?.timelineMonths ?? extra?.timeline_months ?? 0,
+      team_size: extra?.teamSize ?? extra?.team_size ?? 0,
+      elevator_pitch: extra?.elevatorPitch ?? extra?.elevator_pitch ?? '',
+      demo_url: extra?.demoUrl ?? extra?.demo_url ?? ''
+    };
     memory.projects.push(project);
     const { data: fields } = await ensureFieldsByNames(fieldNames);
     for (const f of fields) memory.projectFields.push({ project_id: id, field_id: f.id });
     return { data: project, error: null };
   }
   const supabase = getSupabase();
+  // include extra fields when inserting into Supabase
+  const insertRow = {
+    author_id: authorId,
+    title,
+    description,
+    image_url: imageUrl,
+    funding_goal: fundingGoal,
+    category,
+    status,
+    timeline_months: extra?.timelineMonths ?? extra?.timeline_months ?? null,
+    team_size: extra?.teamSize ?? extra?.team_size ?? null,
+    elevator_pitch: extra?.elevatorPitch ?? extra?.elevator_pitch ?? null,
+    demo_url: extra?.demoUrl ?? extra?.demo_url ?? null
+  };
+
   const { data: project, error } = await supabase.from('projects')
-    .insert({ author_id: authorId, title, description, image_url: imageUrl, funding_goal: fundingGoal, category, status })
+    .insert(insertRow)
     .select('*')
     .single();
   if (error) return { data: null, error };

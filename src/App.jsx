@@ -75,6 +75,8 @@ const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onSh
   const fundingPercentage = (project.currentFunding / project.fundingGoal) * 100;
 
   const getStatusBadge = () => {
+    // featured badge high priority
+    if (project.featured) return <Badge variant="success" className="flex items-center gap-1 bg-yellow-100 text-yellow-800">⭐ Featured</Badge>;
     switch (project.status) {
       case 'funded':
         return <Badge variant="success" className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Funded</Badge>;
@@ -127,6 +129,10 @@ const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onSh
                 {tag}
               </Badge>
             ))}
+          </div>
+          <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+            {project.timelineMonths != null && <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full">⏱ {project.timelineMonths}m</span>}
+            {project.teamSize != null && <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full">👥 {project.teamSize}</span>}
           </div>
         </div>
 
@@ -199,13 +205,31 @@ const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onSh
             </Button>
           )}
         </div>
+
+        {/* Extra details (pitch, demo) */}
+        {(project.elevatorPitch || project.demoUrl) && (
+          <div className="mt-4 border-t pt-3 text-sm text-gray-700">
+            {project.elevatorPitch && (
+              <div className="mb-2">
+                <p className="font-medium text-sm">Elevator pitch</p>
+                <p className="text-sm text-gray-600">{project.elevatorPitch}</p>
+              </div>
+            )}
+            {project.demoUrl && (
+              <div>
+                <p className="font-medium text-sm">Demo</p>
+                <a href={project.demoUrl} target="_blank" rel="noreferrer" className="text-blue-600 break-words">{project.demoUrl}</a>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 // Feed Component
-const Feed = ({ userRole }) => {
+const Feed = ({ userRole, refreshKey = 0 }) => {
   const [filter, setFilter] = useState('all');
 
   const [projects, setProjects] = useState([]);
@@ -228,23 +252,28 @@ const Feed = ({ userRole }) => {
           },
           category: p.category,
           tags: p.tags || [],
-          image: p.image_url,
-          fundingGoal: p.funding_goal ?? 0,
-          currentFunding: p.current_funding ?? 0,
+          image: p.image_url || p.image || '',
+          fundingGoal: p.funding_goal ?? p.fundingGoal ?? 0,
+          currentFunding: p.current_funding ?? p.currentFunding ?? 0,
           likes: p.likes ?? 0,
           comments: 0,
           shares: 0,
           timeAgo: '',
           status: p.status ?? 'pending',
           analystScore: 0,
-          investorInterest: 0
+          investorInterest: 0,
+          // extras
+          timelineMonths: p.timeline_months ?? p.extra?.timelineMonths ?? null,
+          teamSize: p.team_size ?? p.extra?.teamSize ?? null,
+          elevatorPitch: p.elevator_pitch ?? p.extra?.elevatorPitch ?? '',
+          demoUrl: p.demo_url ?? p.extra?.demoUrl ?? ''
         }))
       );
       setLoading(false);
     }
     load();
     return () => { cancelled = true; };
-  }, []);
+  }, [refreshKey]);
 
   const filterButtons = [
     { id: 'all', label: 'All Projects', icon: null },
@@ -368,6 +397,14 @@ export default function App() {
   const [userRole, setUserRole] = useState('student');
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState('feed'); // feed | explore | submit | profile
+  // refresh key is bumped when new projects are created so Feed can re-fetch
+  const [projectsRefreshKey, setProjectsRefreshKey] = useState(0);
+
+  function handleProjectCreated() {
+    // move back to feed and trigger refresh
+    setTab('feed');
+    setProjectsRefreshKey(k => k + 1);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -411,9 +448,9 @@ export default function App() {
 
           {/* Main content area */}
           <div className="pb-24">
-            {tab === 'feed' && <Feed userRole={userRole} />}
+            {tab === 'feed' && <Feed userRole={userRole} refreshKey={projectsRefreshKey} />}
             {tab === 'explore' && <Explore />}
-            {tab === 'submit' && <SubmitForm currentUserId={user?.id} onCreated={() => setTab('feed')} />}
+            {tab === 'submit' && <SubmitForm currentUserId={user?.id} onCreated={handleProjectCreated} />}
             {tab === 'profile' && <Profile user={user} />}
           </div>
 
