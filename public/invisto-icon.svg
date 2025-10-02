@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .blue{fill:#0b79d0}
+      .mint{fill:#98e0d2}
+      .bg{fill:#ffffff}
+    </style>
+  </defs>
+  <rect width="512" height="512" rx="40" class="bg"/>
+  <g transform="translate(40,40) scale(0.8)">
+    <!-- main rounded phone/window stroke -->
+    <path d="M32 16 h288 a32 32 0 0 1 32 32 v288 a32 32 0 0 1 -32 32 h-288 a32 32 0 0 1 -32 -32 v-288 a32 32 0 0 1 32 -32 z" fill="none" stroke="#0b79d0" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- internal arrow/graph -->
+    <path d="M88 112 l56 -40 l40 40 l40 -40" fill="none" stroke="#0b79d0" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M176 160 v96" stroke="#0b79d0" stroke-width="20" stroke-linecap="round" />
+    <!-- mint accents -->
+    <ellipse cx="260" cy="72" rx="16" ry="10" class="mint" transform="rotate(-25 260 72)"/>
+    <rect x="124" y="312" width="36" height="14" rx="6" class="mint" transform="rotate(-20 142 319)"/>
+  </g>
+</svg>

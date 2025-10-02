@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .c1{fill:#0b79d0}
+      .c2{fill:#a7e9d7}
+      .c3{fill:#ffffff}
+    </style>
+  </defs>
+  <!-- Rounded phone/window icon -->
+  <rect x="72" y="40" width="368" height="432" rx="48" class="c1"/>
+  <!-- inner grid lines -->
+  <rect x="120" y="96" width="272" height="48" rx="8" fill="#0b79d0" opacity="0.12"/>
+  <rect x="120" y="208" width="272" height="48" rx="8" fill="#0b79d0" opacity="0.12"/>
+  <rect x="120" y="320" width="272" height="48" rx="8" fill="#0b79d0" opacity="0.12"/>
+  <!-- upward arrow inside -->
+  <path d="M256 144 L288 176 L272 176 L272 248 L240 248 L240 176 L224 176 Z" fill="#ffffff"/>
+  <!-- two small mint accents -->
+  <circle cx="352" cy="120" r="10" class="c2"/>
+  <rect x="176" y="360" width="24" height="12" rx="3" class="c2" transform="rotate(-20 188 366)"/>
+  <!-- wordmark: Investo -->
+  <g transform="translate(80,420)">
+    <text x="0" y="0" font-family="Helvetica, Arial, sans-serif" font-size="36" fill="#0b79d0" font-weight="700">Investo</text>
+  </g>
+</svg>
