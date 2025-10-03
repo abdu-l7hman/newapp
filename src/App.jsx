@@ -58,6 +58,11 @@ const Badge = ({ children, variant = 'default', className = '' }) => {
 const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onShare, onBookmark, onReview, onInvest, onViewDetails }) => {
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
+  const [analystScoreLocal, setAnalystScoreLocal] = useState(project.analystScore || 0);
+  const [investAmountOpen, setInvestAmountOpen] = useState(false);
+  const [investAmount, setInvestAmount] = useState('');
+  const [analystFeedback, setAnalystFeedback] = useState('');
+  const [analystError, setAnalystError] = useState('');
 
   const handleLike = async () => {
     setLiked(!liked);
@@ -150,15 +155,54 @@ const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onSh
         </div>
 
         {/* Analyst Metrics (for analysts and investors) */}
-        {(userRole === 'analyst' || userRole === 'investor') && (
+        {userRole === 'analyst' && (
+          <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-gray-500">Analyst Score</p>
+              <span className="font-bold text-lg text-blue-600">{analystScoreLocal}/10</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="10"
+              value={analystScoreLocal}
+              onChange={(e) => setAnalystScoreLocal(Number(e.target.value))}
+              className="w-full"
+            />
+            <div className="mt-3">
+              <label className="block text-sm font-medium mb-1">Improvement suggestions (required)</label>
+              <textarea
+                value={analystFeedback}
+                onChange={(e) => { setAnalystFeedback(e.target.value); if (analystError) setAnalystError(''); }}
+                placeholder="Describe concrete steps the student can take to improve this project (e.g., validation plan, metrics, technical risks)."
+                rows={3}
+                className={`w-full rounded-md border px-3 py-2 text-sm ${analystError ? 'border-red-300' : 'border-gray-200'}`}
+              />
+              {analystError && <p className="mt-1 text-xs text-red-600">{analystError}</p>}
+            </div>
+            <div className="flex justify-end mt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  if (!analystFeedback || analystFeedback.trim().length < 5) {
+                    setAnalystError('Please provide a brief description (at least 5 characters).');
+                    return;
+                  }
+                  console.log('Analyst rated project', project.id, analystScoreLocal, 'feedback:', analystFeedback.trim());
+                  setAnalystError('');
+                }}
+              >
+                Save rating
+              </Button>
+            </div>
+          </div>
+        )}
+        {userRole === 'investor' && (
           <div className="flex gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
             <div className="flex-1">
               <p className="text-xs text-gray-500">Analyst Score</p>
               <p className="font-bold text-lg text-blue-600">{project.analystScore}/10</p>
-            </div>
-            <div className="flex-1">
-              <p className="text-xs text-gray-500">Investor Interest</p>
-              <p className="font-bold text-lg text-green-600">{project.investorInterest}%</p>
             </div>
           </div>
         )}
@@ -192,10 +236,30 @@ const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onSh
             </Button>
           )}
           {userRole === 'investor' && project.status !== 'pending' && (
-            <Button onClick={onInvest} className="w-full flex items-center justify-center gap-2">
-              <DollarSign className="w-4 h-4" />
-              Invest Now
-            </Button>
+            <>
+              <Button onClick={() => setInvestAmountOpen(true)} className="w-full flex items-center justify-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                Invest Now
+              </Button>
+              {investAmountOpen && (
+                <div className="mt-3 p-3 border rounded-md bg-gray-50">
+                  <label className="block text-sm font-medium mb-1">Investment amount (USD)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={investAmount}
+                    onChange={(e) => setInvestAmount(e.target.value)}
+                    placeholder="e.g. 500"
+                    className="w-full rounded-md border border-gray-200 px-3 py-2"
+                  />
+                  <div className="flex justify-end gap-2 mt-2">
+                    <Button variant="outline" size="sm" onClick={() => { setInvestAmount(''); setInvestAmountOpen(false); }}>Cancel</Button>
+                    <Button size="sm" onClick={() => { const amt = Number(investAmount) || 0; if (amt>0) { console.log('Invest', project.id, amt); onInvest && onInvest(project, amt); setInvestAmount(''); setInvestAmountOpen(false); } }}>Confirm</Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
           {userRole === 'student' && (
             <Button variant="outline" className="w-full" onClick={() => onViewDetails && onViewDetails(project)}>
@@ -227,7 +291,7 @@ const ProjectCard = ({ project, userRole, currentUserId, onLike, onComment, onSh
 };
 
 // Feed Component
-const Feed = ({ userRole, refreshKey = 0, onViewDetails }) => {
+const Feed = ({ userRole, userName = 'Student', refreshKey = 0, onViewDetails }) => {
   const [filter, setFilter] = useState('all');
 
   const [projects, setProjects] = useState([]);
@@ -287,17 +351,17 @@ const Feed = ({ userRole, refreshKey = 0, onViewDetails }) => {
     switch (userRole) {
       case 'student':
         return {
-          title: 'Welcome back, Ali!',
+          title: `Welcome back, ${userName}!`,
           subtitle: 'Discover innovative projects and share your own ideas with the community.'
         };
       case 'analyst':
         return {
-          title: 'Welcome back, Dr. Kamil!',
+          title: `Welcome back, ${userName}!`,
           subtitle: 'Review new student projects and provide valuable insights.'
         };
       case 'investor':
         return {
-          title: 'Welcome back, Abdulmalik!',
+          title: `Welcome back, ${userName}!`,
           subtitle: 'Explore vetted investment opportunities from talented students.'
         };
     }
@@ -480,7 +544,7 @@ export default function App() {
 
           {/* Main content area */}
           <div className="pb-24">
-            {tab === 'feed' && <Feed userRole={userRole} refreshKey={projectsRefreshKey} onViewDetails={openProjectModal} />}
+            {tab === 'feed' && <Feed userRole={userRole} userName={user?.displayName || user?.email || 'Student'} refreshKey={projectsRefreshKey} onViewDetails={openProjectModal} />}
             {tab === 'explore' && <Explore />}
             {tab === 'submit' && <SubmitForm currentUserId={user?.id} onCreated={handleProjectCreated} />}
             {tab === 'profile' && <Profile user={user} />}
